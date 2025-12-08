@@ -1,19 +1,24 @@
 # src/connectors/blockchain_api.py
 
 import time
+from .etherscan_api import etherscan
 
-# TODO: Substituir esta simulação por chamadas reais de API usando a biblioteca 'requests'.
-# Você precisará de chaves de API para serviços como Etherscan, BscScan, etc.
-
-def get_contract_source_code(contract_address: str) -> str:
+def get_contract_source_code(contract_address: str, network: str = "eth") -> str:
     """
-    Simula a busca do código-fonte de um contrato em um explorador de blocos.
+    Busca o código-fonte de um contrato usando Etherscan/BscScan API.
     """
     print(f"Buscando código-fonte para o contrato: {contract_address}...")
-    time.sleep(1) # Simula a latência da rede
-
-    # Exemplo de código de contrato com uma vulnerabilidade e função suspeita
-    # para que o LLM tenha o que analisar.
+    
+    # Tenta buscar código-fonte real da API
+    contract_data = etherscan.get_contract_source_code(contract_address, network)
+    
+    if contract_data and contract_data['source_code']:
+        return contract_data['source_code']
+    
+    # Fallback: Código de exemplo se não encontrar ou se API key não estiver configurada
+    print("⚠️  Usando código de exemplo (configure ETHERSCAN_API_KEY para análises reais)")
+    time.sleep(1)
+    
     sample_code = """
     // SPDX-License-Identifier: MIT
     pragma solidity ^0.8.0;
@@ -59,15 +64,45 @@ def get_contract_source_code(contract_address: str) -> str:
     """
     return sample_code
 
-def get_wallet_transaction_history(wallet_address: str) -> str:
+def get_wallet_transaction_history(wallet_address: str, network: str = "eth") -> str:
     """
-    Simula a busca do histórico de transações de uma carteira.
+    Busca o histórico de transações de uma carteira usando Etherscan/BscScan API.
     """
     print(f"Buscando histórico de transações para a carteira: {wallet_address}...")
+    
+    # Tenta buscar transações reais da API
+    transactions = etherscan.get_transactions(wallet_address, network, limit=20)
+    token_transfers = etherscan.get_token_transfers(wallet_address, network, limit=10)
+    
+    if transactions or token_transfers:
+        history = "Histórico de Transações (Últimas 20):\n\n"
+        
+        # Transações normais
+        if transactions:
+            history += "Transações ETH/BNB:\n"
+            for i, tx in enumerate(transactions[:10], 1):
+                value_eth = int(tx['value']) / 1e18 if tx['value'] else 0
+                tx_type = "Enviou" if tx['from'].lower() == wallet_address.lower() else "Recebeu"
+                other_addr = tx['to'] if tx_type == "Enviou" else tx['from']
+                history += f"{i}. {tx_type} {value_eth:.4f} ETH para/de {other_addr[:10]}...{other_addr[-6:]}\n"
+        
+        # Transferências de tokens
+        if token_transfers:
+            history += "\nTransferências de Tokens:\n"
+            for i, tx in enumerate(token_transfers[:10], 1):
+                value = int(tx['value']) / (10 ** int(tx.get('tokenDecimal', 18)))
+                tx_type = "Enviou" if tx['from'].lower() == wallet_address.lower() else "Recebeu"
+                history += f"{i}. {tx_type} {value:.2f} {tx['tokenSymbol']} ({tx['tokenName']})\n"
+        
+        return history
+    
+    # Fallback: Histórico de exemplo
+    print("⚠️  Usando histórico de exemplo (configure ETHERSCAN_API_KEY para análises reais)")
     time.sleep(1)
-
-    # Exemplo de histórico de transações para análise
+    
     sample_history = f"""
+    Histórico de Transações de Exemplo:
+    
     - Transação 1: Enviou 0.5 ETH para 0x123...abc (Contrato de Staking)
     - Transação 2: Recebeu 10,000,000 SHIBA-INU-CLONE de 0xdef...456 (Airdrop suspeito)
     - Transação 3: Trocou 0.1 ETH por 500 ROCKETCOIN em um DEX desconhecido.

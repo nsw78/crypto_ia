@@ -1,13 +1,22 @@
 # src/llm/prompts.py
 
-def get_contract_analysis_prompt(contract_code: str) -> str:
+def get_contract_analysis_prompt(contract_code: str, risk_score: int = None, risk_level: str = None) -> str:
     """
     Gera o prompt para analisar um contrato inteligente em Solidity.
     """
+    risk_context = ""
+    if risk_score is not None and risk_level is not None:
+        risk_context = f"""
+    
+    **CONTEXTO DE ANÁLISE AUTOMATIZADA:**
+    Nosso sistema de análise automatizada já detectou um Score de Risco de {risk_score}/100 (Nível: {risk_level}).
+    Use essa informação como referência, mas faça sua própria análise independente.
+    """
+    
     return f"""
     Você é um especialista em segurança de contratos inteligentes e auditor de blockchain.
     Sua tarefa é analisar o seguinte contrato em Solidity e fornecer um relatório detalhado.
-
+    {risk_context}
     O relatório deve incluir:
     1.  **Resumo do Contrato**: Uma breve explicação do propósito do contrato em linguagem simples.
     2.  **Análise de Riscos (Veredito)**: Classifique o risco como BAIXO, MÉDIO, ALTO ou CRÍTICO. Justifique sua classificação.
@@ -26,15 +35,24 @@ def get_contract_analysis_prompt(contract_code: str) -> str:
     ```
     """
 
-def get_wallet_analysis_prompt(wallet_history: str, wallet_address: str) -> str:
+def get_wallet_analysis_prompt(wallet_history: str, wallet_address: str, risk_score: int = None, risk_level: str = None) -> str:
     """
     Gera o prompt para analisar o histórico de transações de uma carteira.
     """
+    risk_context = ""
+    if risk_score is not None and risk_level is not None:
+        risk_context = f"""
+    
+    **CONTEXTO DE ANÁLISE AUTOMATIZADA:**
+    Nosso sistema de análise comportamental detectou um Score de Risco de {risk_score}/100 (Nível: {risk_level}).
+    Considere essa informação em sua análise.
+    """
+    
     return f"""
     Você é um analista de blockchain forense. Sua tarefa é analisar o histórico de transações de uma carteira para identificar padrões suspeitos.
 
     A carteira a ser analisada é: {wallet_address}
-
+    {risk_context}
     O histórico de transações é o seguinte:
     {wallet_history}
 
@@ -45,7 +63,7 @@ def get_wallet_analysis_prompt(wallet_history: str, wallet_address: str) -> str:
         - Recebimento de fundos de mixers (ex: Tornado Cash).
         - Padrões de "pump and dump".
         - Transações muito rápidas e em série que podem indicar atividade de bot.
-    3.  **Nível de Risco da Carteira**: Classifique o risco da carteira como BAIXO, MÉDIO ou ALTO, com base nos padrões detectados.
+    3.  **Nível de Risco da Carteira**: Classifique o risco da carteira como BAIXO, MÉDIO, ALTO ou CRÍTICO, com base nos padrões detectados.
     4.  **Observações Adicionais**: Qualquer outra informação relevante que você possa extrair dos dados.
     """
 
