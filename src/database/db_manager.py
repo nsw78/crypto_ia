@@ -9,8 +9,8 @@ from typing import Optional, Dict, List
 class DatabaseManager:
     """Gerencia o banco de dados SQLite para usuários, créditos e análises."""
     
-    def __init__(self, db_path: str = "crypto_ia.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        self.db_path = db_path or os.getenv("DATABASE_PATH", "crypto_ia.db")
         self.init_database()
     
     def get_connection(self):
@@ -88,8 +88,28 @@ class DatabaseManager:
     
     @staticmethod
     def hash_password(password: str) -> str:
-        """Gera hash SHA-256 da senha."""
-        return hashlib.sha256(password.encode()).hexdigest()
+        """Gera hash bcrypt da senha (compatível com a API)."""
+        try:
+            import bcrypt
+            salt = bcrypt.gensalt(rounds=12)
+            return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+        except ImportError:
+            return hashlib.sha256(password.encode()).hexdigest()
+
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        """Verifica senha com suporte a bcrypt e SHA-256 legado."""
+        try:
+            import bcrypt
+            if hashed_password.startswith("$2"):
+                return bcrypt.checkpw(
+                    plain_password.encode("utf-8"),
+                    hashed_password.encode("utf-8"),
+                )
+        except ImportError:
+            pass
+        legacy_hash = hashlib.sha256(plain_password.encode()).hexdigest()
+        return legacy_hash == hashed_password
     
     def create_user(self, email: str, password: str, full_name: str = "") -> Optional[int]:
         """
@@ -120,31 +140,30 @@ class DatabaseManager:
     def authenticate_user(self, email: str, password: str) -> Optional[Dict]:
         """
         Autentica um usuário.
-        
+        Suporta bcrypt (API) e SHA-256 (legado).
+
         Returns:
             Dicionário com dados do usuário ou None se falhar.
         """
         conn = self.get_connection()
         cursor = conn.cursor()
-        
-        password_hash = self.hash_password(password)
-        
+
         cursor.execute('''
-            SELECT id, email, full_name, plan, credits, created_at
+            SELECT id, email, full_name, plan, credits, created_at, password_hash
             FROM users
-            WHERE email = ? AND password_hash = ?
-        ''', (email, password_hash))
-        
+            WHERE email = ?
+        ''', (email,))
+
         result = cursor.fetchone()
-        
-        if result:
+
+        if result and self.verify_password(password, result[6]):
             # Atualiza último login
             cursor.execute('''
                 UPDATE users SET last_login = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (result[0],))
             conn.commit()
-            
+
             user_data = {
                 'id': result[0],
                 'email': result[1],
@@ -155,7 +174,7 @@ class DatabaseManager:
             }
             conn.close()
             return user_data
-        
+
         conn.close()
         return None
     

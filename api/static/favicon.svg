@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95"/>
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:0.9"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="248" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="230" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+  <!-- Shield shape -->
+  <path d="M256 80 L380 140 L380 280 C380 360 256 432 256 432 C256 432 132 360 132 280 L132 140 Z"
+        fill="url(#shield)" opacity="0.2"/>
+  <path d="M256 100 L365 152 L365 275 C365 345 256 410 256 410 C256 410 147 345 147 275 L147 152 Z"
+        fill="none" stroke="white" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Lock / Key icon inside shield -->
+  <circle cx="256" cy="230" r="35" fill="none" stroke="white" stroke-width="8"/>
+  <rect x="230" y="258" width="52" height="60" rx="8" fill="white"/>
+  <!-- Keyhole -->
+  <circle cx="256" cy="278" r="10" fill="url(#bg)"/>
+  <rect x="252" y="283" width="8" height="18" rx="3" fill="url(#bg)"/>
+  <!-- Chain links / blockchain dots -->
+  <circle cx="180" cy="180" r="6" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="332" cy="180" r="6" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="180" cy="320" r="6" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="332" cy="320" r="6" fill="rgba(255,255,255,0.6)"/>
+  <!-- Connecting lines -->
+  <line x1="186" y1="180" x2="230" y2="210" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <line x1="326" y1="180" x2="282" y2="210" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <line x1="186" y1="320" x2="235" y2="300" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <line x1="326" y1="320" x2="277" y2="300" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+</svg>

@@ -159,6 +159,7 @@ def dashboard_page():
         page = st.radio(
             "Menu",
             ["🏠 Dashboard", "🔍 Nova Análise", "📊 Histórico", "💳 Planos", "⚙️ Configurações"],
+            key="nav_menu",
             label_visibility="collapsed"
         )
         
@@ -195,7 +196,7 @@ def show_dashboard_home(user):
         st.metric("Total de Análises", len(analyses))
     
     with col3:
-        high_risk = len([a for a in analyses if a['risk_level'] in ['ALTO', 'CRÍTICO']])
+        high_risk = len([a for a in analyses if (a.get('risk_level') or '') in ['ALTO', 'CRÍTICO']])
         st.metric("Alertas de Alto Risco", high_risk)
     
     with col4:
@@ -220,12 +221,13 @@ def show_dashboard_home(user):
                 st.write(f"`{address_short}`")
             
             with col3:
-                risk_class = f"risk-{analysis['risk_level'].lower()}"
-                st.markdown(f'<span class="risk-badge {risk_class}">{analysis["risk_level"]}</span>', 
+                risk_level = analysis.get('risk_level') or 'N/A'
+                risk_class = f"risk-{risk_level.lower()}"
+                st.markdown(f'<span class="risk-badge {risk_class}">{risk_level}</span>',
                           unsafe_allow_html=True)
-            
+
             with col4:
-                date = analysis['created_at'][:10]
+                date = (analysis.get('created_at') or '')[:10] or 'N/A'
                 st.write(f"_{date}_")
             
             st.markdown("---")
@@ -236,12 +238,12 @@ def show_dashboard_home(user):
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🔍 Nova Análise", use_container_width=True, type="primary"):
-            st.session_state.sidebar_page = "🔍 Nova Análise"
+            st.session_state.nav_menu = "🔍 Nova Análise"
             st.rerun()
     
     with col2:
         if st.button("💳 Ver Planos", use_container_width=True):
-            st.session_state.sidebar_page = "💳 Planos"
+            st.session_state.nav_menu = "💳 Planos"
             st.rerun()
 
 def show_analysis_page(user):
@@ -254,7 +256,7 @@ def show_analysis_page(user):
         st.error("❌ Você não tem créditos suficientes!")
         st.info("💡 Adquira mais créditos na página de Planos")
         if st.button("💳 Ver Planos"):
-            st.session_state.sidebar_page = "💳 Planos"
+            st.session_state.nav_menu = "💳 Planos"
             st.rerun()
         return
     
@@ -459,23 +461,26 @@ def show_history_page(user):
     if filter_type != "Todos":
         filtered = [a for a in filtered if a['type'] == filter_type]
     if filter_risk != "Todos":
-        filtered = [a for a in filtered if a['risk_level'] == filter_risk]
+        filtered = [a for a in filtered if (a.get('risk_level') or '') == filter_risk]
     
     st.markdown("---")
     
     # Exibir análises
     for analysis in filtered:
-        with st.expander(f"{analysis['type'].replace('_', ' ').title()} - {analysis['address']} ({analysis['created_at'][:10]})"):
+        created = (analysis.get('created_at') or '')[:10] or 'N/A'
+        risk_lvl = analysis.get('risk_level') or 'N/A'
+        risk_scr = analysis.get('risk_score') or 0
+        with st.expander(f"{analysis['type'].replace('_', ' ').title()} - {analysis['address']} ({created})"):
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.write(f"**Endereço:** `{analysis['address']}`")
-                st.write(f"**Data:** {analysis['created_at']}")
-            
+                st.write(f"**Data:** {analysis.get('created_at') or 'N/A'}")
+
             with col2:
-                risk_class = f"risk-{analysis['risk_level'].lower()}"
+                risk_class = f"risk-{risk_lvl.lower()}"
                 st.markdown(
-                    f'<div class="risk-badge {risk_class}">Risco: {analysis["risk_score"]}/100 - {analysis["risk_level"]}</div>',
+                    f'<div class="risk-badge {risk_class}">Risco: {risk_scr}/100 - {risk_lvl}</div>',
                     unsafe_allow_html=True
                 )
             
@@ -561,7 +566,7 @@ def show_settings_page(user):
     st.write(f"**Email:** {user['email']}")
     st.write(f"**Nome:** {user['full_name'] or 'Não informado'}")
     st.write(f"**Plano:** {user['plan'].upper()}")
-    st.write(f"**Membro desde:** {user['created_at'][:10]}")
+    st.write(f"**Membro desde:** {(user.get('created_at') or '')[:10] or 'N/A'}")
     
     st.markdown("---")
     

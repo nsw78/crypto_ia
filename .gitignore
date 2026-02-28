@@ -61,3 +61,10 @@ venv.bak/
 .idea/
 .vscode/
 .env
+
+# Database files
+*.db
+test_crypto_ia.db
+
+# Reports
+reports/
